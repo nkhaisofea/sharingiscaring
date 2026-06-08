@@ -164,9 +164,12 @@
                     </div>
                 @endif
 
-                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-xl hover:border-indigo-500 transition duration-200" x-data="{ fileName: '' }">
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-xl hover:border-indigo-500 transition duration-200" x-data="{ fileName: '', previewUrl: '' }">
                     <div class="space-y-1 text-center">
-                        <i class="fas fa-image text-gray-400 text-3xl mb-3"></i>
+                        <template x-if="previewUrl">
+                            <img :src="previewUrl" alt="Selected equipment preview" class="mx-auto mb-4 h-40 w-full max-w-xs rounded-xl object-cover border border-gray-200">
+                        </template>
+                        <i class="fas fa-image text-gray-400 text-3xl mb-3" x-show="!previewUrl"></i>
                         <div class="flex text-sm text-gray-600 justify-center">
                             <label for="image" class="relative cursor-pointer bg-white rounded-md font-bold text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
                                 <span>Upload a new file</span>
@@ -175,7 +178,11 @@
                                        type="file" 
                                        accept="image/*"
                                        class="sr-only"
-                                       @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                       @change="
+                                           const file = $event.target.files[0];
+                                           fileName = file ? file.name : '';
+                                           previewUrl = file ? URL.createObjectURL(file) : '';
+                                       ">
                             </label>
                             <p class="pl-1">or drag and drop</p>
                         </div>

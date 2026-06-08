@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Equipment;
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class EquipmentController extends Controller implements HasMiddleware
 {
@@ -19,20 +22,33 @@ class EquipmentController extends Controller implements HasMiddleware
 
     public function index(Request $request)
     {
-        $query = Equipment::with(['club', 'category'])->where('availability_status', 'available');
+        $query = Equipment::with(['club', 'category'])->withCount('rentals');
         
-        // Search
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
         }
         
-        // Filter by category
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
+
+        if ($request->filled('min_price')) {
+            $query->where('price_per_day', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price_per_day', '<=', $request->max_price);
+        }
+
+        $availability = $request->get('availability', 'available');
+        if ($availability === 'available') {
+            $query->where('availability_status', 'available');
+        }
         
-        // Sort
         $sort = $request->get('sort', 'newest');
         switch($sort) {
             case 'price_low':
@@ -41,14 +57,18 @@ class EquipmentController extends Controller implements HasMiddleware
             case 'price_high':
                 $query->orderBy('price_per_day', 'desc');
                 break;
+            case 'popular':
+                $query->orderByDesc('rentals_count')->latest();
+                break;
             default:
                 $query->latest();
         }
         
-        $equipment = $query->paginate(12);
-        $categories = Category::all();
+        $equipment = $query->paginate(12)->withQueryString();
+        $categories = Category::orderBy('name')->get();
+        $resultCount = $equipment->total();
         
-        return view('equipment.index', compact('equipment', 'categories'));
+        return view('equipment.index', compact('equipment', 'categories', 'resultCount'));
     }
 
     public function show(Equipment $equipment)
@@ -77,8 +97,18 @@ class EquipmentController extends Controller implements HasMiddleware
             return redirect()->route('dashboard')->with('error', 'Only club admins can add equipment.');
         }
         
-        $categories = Category::all();
-        return view('equipment.create', compact('categories'));
+        $categories = Category::orderBy('name')->get();
+        $clubs = auth()->user()->isSuperAdmin()
+            ? User::whereNotNull('club_name')
+                ->where('role', 'club_admin')
+                ->where(function ($query) {
+                    $query->whereNull('club_status')->orWhere('club_status', 'approved');
+                })
+                ->orderBy('club_name')
+                ->get(['id', 'club_name', 'email'])
+            : collect();
+
+        return view('equipment.create', compact('categories', 'clubs'));
     }
 
     public function store(Request $request)
@@ -90,7 +120,12 @@ class EquipmentController extends Controller implements HasMiddleware
             'price_per_day' => 'required|numeric|min:0',
             'condition' => 'required|in:new,excellent,good,fair,poor',
             'pickup_location' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048'
+            'image' => 'nullable|image|max:2048',
+            'club_id' => [
+                Rule::requiredIf(auth()->user()->isSuperAdmin()),
+                'nullable',
+                'exists:users,id',
+            ],
         ]);
         
         if ($request->hasFile('image')) {
@@ -98,7 +133,9 @@ class EquipmentController extends Controller implements HasMiddleware
             $validated['image'] = $path;
         }
         
-        $validated['club_id'] = auth()->id();
+        $validated['club_id'] = auth()->user()->isSuperAdmin()
+            ? $validated['club_id']
+            : auth()->id();
         $validated['availability_status'] = 'available';
         
         Equipment::create($validated);
@@ -112,7 +149,7 @@ class EquipmentController extends Controller implements HasMiddleware
             return redirect()->route('dashboard')->with('error', 'Unauthorized action.');
         }
         
-        $categories = Category::all();
+        $categories = Category::orderBy('name')->get();
         return view('equipment.edit', compact('equipment', 'categories'));
     }
 
@@ -134,6 +171,10 @@ class EquipmentController extends Controller implements HasMiddleware
         ]);
         
         if ($request->hasFile('image')) {
+            if ($equipment->image) {
+                Storage::disk('public')->delete($equipment->image);
+            }
+
             $path = $request->file('image')->store('equipment', 'public');
             $validated['image'] = $path;
         }

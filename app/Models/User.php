@@ -14,7 +14,8 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'club_name', 'student_id'
+        'name', 'email', 'password', 'role', 'club_name', 'student_id',
+        'club_status', 'rejection_reason', 'suspended_at',
     ];
 
     protected $hidden = [
@@ -31,6 +32,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'suspended_at' => 'datetime',
         ];
     }
 
@@ -51,11 +53,20 @@ class User extends Authenticatable
     }
 
     /**
+     * Get rentals for equipment owned by this club.
+     */
+    public function clubRentals()
+    {
+        return $this->hasManyThrough(Rental::class, Equipment::class, 'club_id', 'equipment_id');
+    }
+
+    /**
      * Check if user is a club admin.
      */
     public function isClubAdmin()
     {
-        return $this->role === 'club_admin';
+        return $this->role === 'club_admin'
+            && in_array($this->club_status, [null, 'approved'], true);
     }
 
     /**
@@ -64,6 +75,25 @@ class User extends Authenticatable
     public function isSuperAdmin()
     {
         return $this->role === 'super_admin';
+    }
+
+    /**
+     * Check if user is waiting for club admin approval.
+     */
+    public function isPendingClub()
+    {
+        return $this->role === 'pending_club'
+            && in_array($this->club_status, [null, 'pending'], true);
+    }
+
+    public function isRejectedClub()
+    {
+        return $this->club_status === 'rejected';
+    }
+
+    public function isSuspendedClub()
+    {
+        return $this->club_status === 'suspended';
     }
 
     /**

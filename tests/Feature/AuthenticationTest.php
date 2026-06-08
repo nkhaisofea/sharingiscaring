@@ -17,6 +17,9 @@ class AuthenticationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Sign In');
+        $response->assertSee('Student Member');
+        $response->assertSee('Club Admin');
+        $response->assertSee('Student ID');
         $response->assertSee('Email');
         $response->assertSee('Password');
     }
@@ -28,7 +31,7 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Register');
         $response->assertSee('Student ID');
-        $response->assertSee('IIUM Email');
+        $response->assertSee('Club Name');
     }
 
     public function test_users_can_register_with_valid_iium_student_email(): void
@@ -52,24 +55,65 @@ class AuthenticationTest extends TestCase
         ]);
     }
 
-    public function test_users_can_register_with_valid_iium_staff_email(): void
+    public function test_club_admins_can_register_with_any_valid_email_and_club_name(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Dr Musa',
-            'student_id' => '99123',
-            'email' => 'musa@iium.edu.my',
+            'role' => 'club_admin',
+            'club_name' => 'IIUM Sports Club',
+            'email' => 'musa@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
-        $this->assertAuthenticated();
+        $response->assertRedirect(route('login'));
+        $this->assertGuest();
         
         $this->assertDatabaseHas('users', [
-            'name' => 'Dr Musa',
-            'student_id' => '99123',
-            'email' => 'musa@iium.edu.my',
+            'name' => 'IIUM Sports Club',
+            'student_id' => null,
+            'email' => 'musa@example.com',
+            'role' => 'pending_club',
+            'club_name' => 'IIUM Sports Club',
+            'club_status' => 'pending',
         ]);
+    }
+
+    public function test_club_admin_registration_requires_unique_club_name(): void
+    {
+        User::forceCreate([
+            'name' => 'IIUM Sports Club',
+            'email' => 'sports@example.com',
+            'password' => Hash::make('password123'),
+            'role' => 'pending_club',
+            'club_name' => 'IIUM Sports Club',
+        ]);
+
+        $response = $this->post('/register', [
+            'role' => 'club_admin',
+            'club_name' => 'IIUM Sports Club',
+            'email' => 'musa@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'club_name' => 'This club name is already registered',
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_super_admin_cannot_register_publicly(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Super Admin',
+            'role' => 'super_admin',
+            'email' => 'super@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors(['role']);
+        $this->assertGuest();
     }
 
     public function test_users_cannot_register_with_non_iium_email(): void
@@ -97,7 +141,8 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'fatimah@student.iium.edu.my',
+            'role' => 'member',
+            'student_id' => '2123456',
             'password' => 'password123',
         ]);
 
@@ -116,8 +161,49 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'fatimah@student.iium.edu.my',
+            'role' => 'member',
+            'student_id' => '2123456',
             'password' => 'wrongpassword',
+        ]);
+
+        $response->assertSessionHasErrors(['student_id']);
+        $this->assertGuest();
+    }
+
+    public function test_approved_club_admins_can_authenticate_with_email(): void
+    {
+        $user = User::forceCreate([
+            'name' => 'IIUM Robotics Club',
+            'email' => 'robotics@example.com',
+            'password' => Hash::make('password123'),
+            'role' => 'club_admin',
+            'club_name' => 'IIUM Robotics Club',
+        ]);
+
+        $response = $this->post('/login', [
+            'role' => 'club_admin',
+            'email' => 'robotics@example.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_pending_club_admins_cannot_authenticate(): void
+    {
+        User::forceCreate([
+            'name' => 'IIUM Pending Club',
+            'email' => 'pending@example.com',
+            'password' => Hash::make('password123'),
+            'role' => 'pending_club',
+            'club_name' => 'IIUM Pending Club',
+        ]);
+
+        $response = $this->post('/login', [
+            'role' => 'club_admin',
+            'email' => 'pending@example.com',
+            'password' => 'password123',
         ]);
 
         $response->assertSessionHasErrors(['email']);

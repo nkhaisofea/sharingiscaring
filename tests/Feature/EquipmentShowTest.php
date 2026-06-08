@@ -147,6 +147,64 @@ class EquipmentShowTest extends TestCase
         $response->assertDontSee('Rent This Equipment');
     }
 
+    public function test_super_admin_can_rent_equipment_and_it_is_approved_immediately(): void
+    {
+        $category = Category::create([
+            'name' => 'Audio',
+            'slug' => 'audio',
+            'icon' => 'fa-volume-up'
+        ]);
+
+        $club = User::forceCreate([
+            'name' => 'Audio Club Admin',
+            'email' => 'audio-admin@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'club_admin',
+            'club_name' => 'IIUM Audio Club',
+            'student_id' => '9090909'
+        ]);
+
+        $superAdmin = User::forceCreate([
+            'name' => 'Super Admin',
+            'email' => 'super@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'super_admin',
+        ]);
+
+        $equipment = Equipment::create([
+            'club_id' => $club->id,
+            'category_id' => $category->id,
+            'name' => 'Wireless Microphone Set',
+            'description' => 'Four wireless microphones.',
+            'price_per_day' => 45.00,
+            'condition' => 'excellent',
+            'availability_status' => 'available',
+            'pickup_location' => 'Audio Room'
+        ]);
+
+        $response = $this->actingAs($superAdmin)->get("/equipment/{$equipment->id}");
+
+        $response->assertStatus(200);
+        $response->assertSee('Rent This Equipment');
+
+        $this->actingAs($superAdmin)->post("/equipment/{$equipment->id}/rent", [
+            'start_date' => now()->addDay()->format('Y-m-d'),
+            'end_date' => now()->addDays(2)->format('Y-m-d'),
+            'purpose' => 'Super admin rental test',
+        ])->assertRedirect(route('rentals.my-rentals'));
+
+        $this->assertDatabaseHas('rentals', [
+            'equipment_id' => $equipment->id,
+            'borrower_id' => $superAdmin->id,
+            'status' => 'approved',
+        ]);
+
+        $this->assertDatabaseHas('equipment', [
+            'id' => $equipment->id,
+            'availability_status' => 'rented',
+        ]);
+    }
+
     public function test_availability_calendar_shows_blocked_dates(): void
     {
         $category = Category::create([

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminClubController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentController;
@@ -28,6 +29,16 @@ Route::middleware('auth')->group(function () {
     // Profile
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+
+    // Super Admin Club Approvals
+    Route::get('/admin/pending-clubs', [AuthController::class, 'pendingClubs'])->name('admin.pending-clubs');
+    Route::post('/admin/pending-clubs/{user}/approve', [AuthController::class, 'approveClub'])->name('admin.pending-clubs.approve');
+    Route::post('/admin/pending-clubs/{user}/reject', [AuthController::class, 'rejectClub'])->name('admin.pending-clubs.reject');
+    Route::get('/admin/clubs', [AdminClubController::class, 'index'])->name('admin.clubs.index');
+    Route::post('/admin/clubs/{user}/approve', [AdminClubController::class, 'approve'])->name('admin.clubs.approve');
+    Route::post('/admin/clubs/{user}/reject', [AdminClubController::class, 'reject'])->name('admin.clubs.reject');
+    Route::post('/admin/clubs/{user}/suspend', [AdminClubController::class, 'suspend'])->name('admin.clubs.suspend');
+    Route::post('/admin/clubs/{user}/activate', [AdminClubController::class, 'activate'])->name('admin.clubs.activate');
     
     // Equipment Management (CRUD)
     Route::resource('equipment', EquipmentController::class)->except(['index', 'show']);
@@ -35,9 +46,6 @@ Route::middleware('auth')->group(function () {
     // Rentals
     Route::post('/equipment/{equipment}/rent', [RentalController::class, 'store'])->name('rentals.store');
     Route::get('/my-rentals', [RentalController::class, 'myRentals'])->name('rentals.my-rentals');
-    Route::get('/pending-requests', [RentalController::class, 'pendingRequests'])->name('rentals.pending');
-    Route::post('/rentals/{rental}/approve', [RentalController::class, 'approve'])->name('rentals.approve');
-    Route::post('/rentals/{rental}/reject', [RentalController::class, 'reject'])->name('rentals.reject');
     Route::post('/rentals/{rental}/complete', [RentalController::class, 'complete'])->name('rentals.complete');
     Route::post('/rentals/{rental}/cancel', [RentalController::class, 'cancel'])->name('rentals.cancel');
 });

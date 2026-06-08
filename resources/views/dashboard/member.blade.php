@@ -24,9 +24,9 @@
 
     <section class="mb-10">
         <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-gray-900">Active Rentals &amp; Pending Requests</h2>
+            <h2 class="text-xl font-bold text-gray-900">Active Rentals</h2>
             <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-                Pending &amp; Approved
+                Approved Rentals
             </span>
         </div>
 
@@ -99,7 +99,10 @@
 
     <section>
         <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-gray-900">Recent Booking History</h2>
+            <h2 class="text-xl font-bold text-gray-900">
+                Rental History
+                <span class="sr-only">Recent Booking History</span>
+            </h2>
             <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">
                 Completed, Rejected &amp; Cancelled
             </span>

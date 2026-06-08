@@ -25,6 +25,28 @@
         <form method="POST" action="{{ route('equipment.store') }}" enctype="multipart/form-data" class="p-8 space-y-6">
             @csrf
 
+            @if(auth()->user()->isSuperAdmin())
+                <div>
+                    <label for="club_id" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Owning Club</label>
+                    <select name="club_id"
+                            id="club_id"
+                            required
+                            class="w-full px-4 py-3 border @error('club_id') border-rose-500 focus:ring-rose-500 @else border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 @enderror rounded-xl focus:outline-none focus:ring-2 text-sm transition bg-white">
+                        <option value="" disabled {{ old('club_id') ? '' : 'selected' }}>Select the club that owns this equipment</option>
+                        @forelse($clubs as $club)
+                            <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
+                                {{ $club->club_name }} ({{ $club->email }})
+                            </option>
+                        @empty
+                            <option value="" disabled>No approved clubs available.</option>
+                        @endforelse
+                    </select>
+                    @error('club_id')
+                        <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
+
             <!-- Name -->
             <div>
                 <label for="name" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Equipment Name</label>
@@ -48,12 +70,14 @@
                             id="category_id" 
                             required
                             class="w-full px-4 py-3 border @error('category_id') border-rose-500 focus:ring-rose-500 @else border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 @enderror rounded-xl focus:outline-none focus:ring-2 text-sm transition bg-white">
-                        <option value="" disabled selected>Select Category</option>
-                        @foreach($categories as $category)
+                        <option value="" disabled {{ old('category_id') ? '' : 'selected' }}>Select Category</option>
+                        @forelse($categories as $category)
                             <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
-                        @endforeach
+                        @empty
+                            <option value="" disabled>No categories found. Please run the category seeder.</option>
+                        @endforelse
                     </select>
                     @error('category_id')
                         <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p>
@@ -134,9 +158,12 @@
             <!-- Image Upload -->
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Equipment Image</label>
-                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-xl hover:border-indigo-500 transition duration-200" x-data="{ fileName: '' }">
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-xl hover:border-indigo-500 transition duration-200" x-data="{ fileName: '', previewUrl: '' }">
                     <div class="space-y-1 text-center">
-                        <i class="fas fa-image text-gray-400 text-3xl mb-3"></i>
+                        <template x-if="previewUrl">
+                            <img :src="previewUrl" alt="Selected equipment preview" class="mx-auto mb-4 h-40 w-full max-w-xs rounded-xl object-cover border border-gray-200">
+                        </template>
+                        <i class="fas fa-image text-gray-400 text-3xl mb-3" x-show="!previewUrl"></i>
                         <div class="flex text-sm text-gray-600 justify-center">
                             <label for="image" class="relative cursor-pointer bg-white rounded-md font-bold text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
                                 <span>Upload a file</span>
@@ -145,7 +172,11 @@
                                        type="file" 
                                        accept="image/*"
                                        class="sr-only"
-                                       @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                       @change="
+                                           const file = $event.target.files[0];
+                                           fileName = file ? file.name : '';
+                                           previewUrl = file ? URL.createObjectURL(file) : '';
+                                       ">
                             </label>
                             <p class="pl-1">or drag and drop</p>
                         </div>

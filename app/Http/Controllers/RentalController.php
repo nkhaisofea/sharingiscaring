@@ -20,7 +20,7 @@ class RentalController extends Controller implements HasMiddleware
 
     public function store(Request $request, Equipment $equipment)
     {
-        if (auth()->id() === $equipment->club_id) {
+        if (auth()->id() === $equipment->club_id && !auth()->user()->isSuperAdmin()) {
             return redirect()->route('equipment.show', $equipment)
                 ->with('error', 'You cannot rent your own equipment.');
         }
@@ -46,17 +46,21 @@ class RentalController extends Controller implements HasMiddleware
         $days = (strtotime($validated['end_date']) - strtotime($validated['start_date'])) / (60 * 60 * 24) + 1;
         $total_price = $days * $equipment->price_per_day;
         
-        Rental::create([
-            'equipment_id' => $equipment->id,
-            'borrower_id' => auth()->id(),
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
-            'purpose' => $validated['purpose'],
-            'total_price' => $total_price,
-            'status' => 'pending'
-        ]);
+        DB::transaction(function () use ($equipment, $validated, $total_price) {
+            Rental::create([
+                'equipment_id' => $equipment->id,
+                'borrower_id' => auth()->id(),
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'purpose' => $validated['purpose'],
+                'total_price' => $total_price,
+                'status' => 'approved'
+            ]);
+
+            $equipment->update(['availability_status' => 'rented']);
+        });
         
-        return redirect()->route('rentals.my-rentals')->with('success', 'Rental request submitted successfully!');
+        return redirect()->route('rentals.my-rentals')->with('success', 'Rental confirmed successfully!');
     }
 
     public function myRentals()
@@ -67,51 +71,6 @@ class RentalController extends Controller implements HasMiddleware
             ->paginate(10);
             
         return view('rentals.my-rentals', compact('rentals'));
-    }
-
-    public function pendingRequests()
-    {
-        if (!auth()->user()->isClubAdmin()) {
-            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
-        }
-        
-        $requests = Rental::with(['equipment', 'borrower'])
-            ->whereHas('equipment', function($q) {
-                $q->where('club_id', auth()->id());
-            })
-            ->where('status', 'pending')
-            ->latest()
-            ->paginate(10);
-            
-        return view('rentals.pending-requests', compact('requests'));
-    }
-
-    public function approve(Rental $rental)
-    {
-        if ($rental->equipment->club_id !== auth()->id() && !auth()->user()->isSuperAdmin()) {
-            return redirect()->back()->with('error', 'Unauthorized action.');
-        }
-        
-        DB::transaction(function () use ($rental) {
-            $rental->update(['status' => 'approved']);
-            $rental->equipment->update(['availability_status' => 'rented']);
-        });
-        
-        return redirect()->back()->with('success', 'Rental request approved!');
-    }
-
-    public function reject(Request $request, Rental $rental)
-    {
-        if ($rental->equipment->club_id !== auth()->id() && !auth()->user()->isSuperAdmin()) {
-            return redirect()->back()->with('error', 'Unauthorized action.');
-        }
-        
-        $rental->update([
-            'status' => 'rejected',
-            'admin_notes' => $request->notes
-        ]);
-        
-        return redirect()->back()->with('success', 'Rental request rejected.');
     }
 
     public function complete(Rental $rental)

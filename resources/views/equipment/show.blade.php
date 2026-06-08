@@ -171,7 +171,7 @@
             <div>
                 @if($equipment->isAvailable())
                     @auth
-                        @if(auth()->id() === $equipment->club_id)
+                        @if(auth()->id() === $equipment->club_id && !auth()->user()->isSuperAdmin())
                             <div class="space-y-3">
                                 <div class="w-full text-center text-gray-500 py-4 bg-gray-50 border border-gray-100 rounded-xl font-medium flex items-center justify-center gap-2">
                                     <i class="fas fa-user-shield text-gray-400"></i>
@@ -253,7 +253,7 @@
 
     {{-- Rental Modal --}}
     @auth
-        @if($equipment->isAvailable() && auth()->id() !== $equipment->club_id)
+        @if($equipment->isAvailable() && (auth()->id() !== $equipment->club_id || auth()->user()->isSuperAdmin()))
             <x-modal show="showModal" title="Request Rental" icon="fa-calendar-alt">
                 <form method="POST" action="{{ route('rentals.store', $equipment) }}" class="p-6">
                     @csrf
@@ -344,7 +344,7 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    @if(old('start_date') && auth()->check() && auth()->id() !== $equipment->club_id)
+    @if(old('start_date') && auth()->check() && (auth()->id() !== $equipment->club_id || auth()->user()->isSuperAdmin()))
         <script>
             document.addEventListener('alpine:initialized', () => {
                 const root = document.getElementById('equipment-show');
