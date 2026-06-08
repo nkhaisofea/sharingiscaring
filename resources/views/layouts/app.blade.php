@@ -39,7 +39,18 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+
+        [x-cloak] { display: none !important; }
+
+        .flatpickr-day.disabled,
+        .flatpickr-day.disabled:hover {
+            background: #ffe4e6 !important;
+            border-color: #fecdd3 !important;
+            color: #e11d48 !important;
+        }
     </style>
+
+    @stack('styles')
 </head>
 <body class="bg-gray-50">
     
@@ -144,5 +155,6 @@
     </main>
     
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

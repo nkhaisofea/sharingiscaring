@@ -20,11 +20,27 @@ class RentalController extends Controller implements HasMiddleware
 
     public function store(Request $request, Equipment $equipment)
     {
+        if (auth()->id() === $equipment->club_id) {
+            return redirect()->route('equipment.show', $equipment)
+                ->with('error', 'You cannot rent your own equipment.');
+        }
+
+        if (!$equipment->isAvailable()) {
+            return redirect()->route('equipment.show', $equipment)
+                ->with('error', 'This equipment is currently unavailable.');
+        }
+
         $validated = $request->validate([
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
             'purpose' => 'required|string|max:500'
         ]);
+
+        if ($equipment->hasDateConflict($validated['start_date'], $validated['end_date'])) {
+            return redirect()->route('equipment.show', $equipment)
+                ->with('error', 'Selected dates conflict with an existing booking. Please choose different dates.')
+                ->withInput();
+        }
         
         // Calculate total price
         $days = (strtotime($validated['end_date']) - strtotime($validated['start_date'])) / (60 * 60 * 24) + 1;

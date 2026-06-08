@@ -11,7 +11,17 @@
             </div>
             <h2 class="mt-6 text-3xl font-bold">Sign In</h2>
         </div>
-        
+        @if ($errors->any())
+            <div class="mb-4 p-3.5 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-xs font-semibold flex items-start gap-2 animate-fadeIn">
+                <i class="fas fa-circle-exclamation mt-0.5"></i>
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form method="POST" action="/login" class="mt-8">
             @csrf
             <div class="mb-4">

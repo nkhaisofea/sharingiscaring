@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::get('/', [EquipmentController::class, 'index'])->name('home');
 Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
-Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');
 
 // Guest routes (auth)
 Route::middleware('guest')->group(function () {
@@ -42,3 +41,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/rentals/{rental}/complete', [RentalController::class, 'complete'])->name('rentals.complete');
     Route::post('/rentals/{rental}/cancel', [RentalController::class, 'cancel'])->name('rentals.cancel');
 });
+
+// Fallback wildcard route for single equipment view
+Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');

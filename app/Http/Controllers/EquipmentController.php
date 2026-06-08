@@ -54,14 +54,21 @@ class EquipmentController extends Controller implements HasMiddleware
     public function show(Equipment $equipment)
     {
         $equipment->load(['club', 'category']);
+
+        $blockedRentals = $equipment->blockedRentals()
+            ->with('borrower:id,name')
+            ->get(['id', 'borrower_id', 'start_date', 'end_date', 'status']);
+
+        $blockedDates = $equipment->getBlockedDates();
         
-        $relatedEquipment = Equipment::where('category_id', $equipment->category_id)
+        $relatedEquipment = Equipment::with('category')
+            ->where('category_id', $equipment->category_id)
             ->where('id', '!=', $equipment->id)
             ->where('availability_status', 'available')
             ->limit(4)
             ->get();
             
-        return view('equipment.show', compact('equipment', 'relatedEquipment'));
+        return view('equipment.show', compact('equipment', 'relatedEquipment', 'blockedRentals', 'blockedDates'));
     }
 
     public function create()

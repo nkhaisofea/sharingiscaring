@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Equipment;
 use App\Models\Rental;
 
-class DashboardController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+
+class DashboardController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('auth');
+        return ['auth'];
     }
 
     public function index()
@@ -47,7 +49,7 @@ class DashboardController extends Controller
         }
         
         // Member Dashboard
-        $activeRentals = Rental::with('equipment')
+        $activeRentals = Rental::with('equipment.club')
             ->where('borrower_id', $user->id)
             ->whereIn('status', ['pending', 'approved'])
             ->get();

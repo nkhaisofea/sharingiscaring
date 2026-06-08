@@ -11,20 +11,30 @@
             </div>
             <h2 class="mt-6 text-3xl font-bold">Register</h2>
         </div>
-        
+        @if ($errors->any())
+            <div class="mb-4 p-3.5 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-xs font-semibold flex items-start gap-2 animate-fadeIn">
+                <i class="fas fa-circle-exclamation mt-0.5"></i>
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form method="POST" action="/register" class="mt-8">
             @csrf
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Full Name</label>
-                <input type="text" name="name" required class="w-full px-3 py-2 border rounded-lg">
+                <input type="text" name="name" value="{{ old('name') }}" required class="w-full px-3 py-2 border rounded-lg">
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Student ID</label>
-                <input type="text" name="student_id" required class="w-full px-3 py-2 border rounded-lg">
+                <input type="text" name="student_id" value="{{ old('student_id') }}" required class="w-full px-3 py-2 border rounded-lg">
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">IIUM Email</label>
-                <input type="email" name="email" required class="w-full px-3 py-2 border rounded-lg">
+                <input type="email" name="email" value="{{ old('email') }}" required class="w-full px-3 py-2 border rounded-lg">
                 <p class="text-xs text-gray-500 mt-1">Must end with @student.iium.edu.my or @iium.edu.my</p>
             </div>
             <div class="mb-4">
