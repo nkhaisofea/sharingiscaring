@@ -84,7 +84,7 @@ Key Relationships:
 - Categories have multiple Equipment items (One-to-Many)
 
 **Laravel Components Implementation**
-Routes (web.php)
+```Routes (web.php)
 <?php
 use App\Http\Controllers\AdminClubController;
 use App\Http\Controllers\AuthController;
@@ -95,8 +95,7 @@ use App\Models\Equipment;
 use App\Models\Rental;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
-
-``` // Public routes
+ // Public routes
 Route::get('/', function () {
     $featuredEquipment = Equipment::with(['club', 'category'])
         ->inRandomOrder()
@@ -153,7 +152,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Fallback wildcard route for single equipment view
-Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show'); ```
+Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');```md
 
 - Controllers
 
