@@ -163,7 +163,7 @@ EquipmentController: Full CRUD operations for equipment with search, filter, and
 RentalController: Processes rental requests, manages rental status updates, and handles cancellations
 AdminClubController: Super admin functionality for club approval, suspension, and management
 Models and Relationships
-<?php
+```<?php
 
 namespace App\Models;
 
@@ -263,7 +263,7 @@ class User extends Authenticatable
         return substr($initials, 0, 2);
     }
 }
-} 
+}```md
 
 - Views and User Interface
 *Blade Templates Structure:*
