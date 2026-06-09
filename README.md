@@ -84,7 +84,8 @@ Key Relationships:
 - Categories have multiple Equipment items (One-to-Many)
 
 **Laravel Components Implementation**
-```Routes (web.php)
+Routes (web.php)
+```
 <?php
 use App\Http\Controllers\AdminClubController;
 use App\Http\Controllers\AuthController;
@@ -152,11 +153,8 @@ Route::middleware('auth')->group(function () {
 });
 
 // Fallback wildcard route for single equipment view
-Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');```md
-
-
-
-
+Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');
+```
 
 
 - Controllers
@@ -168,6 +166,7 @@ EquipmentController: Full CRUD operations for equipment with search, filter, and
 RentalController: Processes rental requests, manages rental status updates, and handles cancellations
 AdminClubController: Super admin functionality for club approval, suspension, and management
 Models and Relationships
+```
 <?php
 
 namespace App\Models;
@@ -269,6 +268,7 @@ class User extends Authenticatable
     }
 }
 }
+```
 
 - Views and User Interface
 *Blade Templates Structure:*
