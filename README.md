@@ -96,7 +96,7 @@ use App\Models\Rental;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
+``` // Public routes
 Route::get('/', function () {
     $featuredEquipment = Equipment::with(['club', 'category'])
         ->inRandomOrder()
@@ -153,7 +153,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Fallback wildcard route for single equipment view
-Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');
+Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show'); ```
 
 - Controllers
 
