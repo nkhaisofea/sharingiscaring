@@ -121,7 +121,7 @@ class EquipmentController extends Controller implements HasMiddleware
             'condition' => 'required|in:new,excellent,good,fair,poor',
             'pickup_location' => 'required|string|max:255',
             'image' => 'nullable|image|max:2048',
-            'club_id' => [
+            'delete_image' => 'nullable|boolean',            'club_id' => [
                 Rule::requiredIf(auth()->user()->isSuperAdmin()),
                 'nullable',
                 'exists:users,id',
@@ -170,6 +170,13 @@ class EquipmentController extends Controller implements HasMiddleware
             'image' => 'nullable|image|max:2048'
         ]);
         
+        // Delete current image
+        if ($request->delete_image && $equipment->image) {
+            Storage::disk('public')->delete($equipment->image);
+            $validated['image'] = null;
+        }
+
+        // Upload new image
         if ($request->hasFile('image')) {
             if ($equipment->image) {
                 Storage::disk('public')->delete($equipment->image);

@@ -152,17 +152,34 @@
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Equipment Image</label>
                 
-                @if($equipment->image)
-                    <div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-4">
-                        <div class="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shrink-0">
-                            <img src="{{ asset('storage/' . $equipment->image) }}" alt="Current image" class="w-full h-full object-cover">
-                        </div>
-                        <div>
-                            <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">Current Image</span>
-                            <span class="text-xs text-gray-500 font-semibold block mt-0.5">Keep blank if you don't want to change it.</span>
-                        </div>
-                    </div>
-                @endif
+@if($equipment->image)
+    <div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                <img src="{{ asset('storage/' . $equipment->image) }}"
+                     alt="Current image"
+                     class="w-full h-full object-cover">
+            </div>
+
+            <div>
+                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                    Current Image
+                </span>
+                <span class="text-xs text-gray-500 font-semibold block mt-0.5">
+                    Keep blank if you don't want to change it.
+                </span>
+            </div>
+        </div>
+
+        <label class="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-lg cursor-pointer hover:bg-red-100 transition">
+            <input type="checkbox"
+                   name="delete_image"
+                   value="1"
+                   class="mr-2">
+            Delete Image
+        </label>
+    </div>
+@endif
 
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 border-dashed rounded-xl hover:border-indigo-500 transition duration-200" x-data="{ fileName: '', previewUrl: '' }">
                     <div class="space-y-1 text-center">

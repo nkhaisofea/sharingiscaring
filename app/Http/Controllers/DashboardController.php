@@ -56,22 +56,20 @@ class DashboardController extends Controller implements HasMiddleware
             }
 
             $pendingRequests = (clone $adminRentalQuery)
-                ->where('status', 'approved')
-                ->whereDate('created_at', today())
-                ->count();
+    ->where('status', 'pending')
+    ->count();
             $activeRentals = (clone $adminRentalQuery)->where('status', 'approved')->count();
 
             $recentRequests = Rental::with(['equipment', 'borrower'])
-                ->when($user->isClubAdmin(), function($query) use ($user) {
-                    $query->whereHas('equipment', function($q) use ($user) {
-                        $q->where('club_id', $user->id);
-                    });
-                })
-                ->where('status', 'approved')
-                ->latest()
-                ->limit(5)
-                ->get();
-                
+    ->when($user->isClubAdmin(), function($query) use ($user) {
+        $query->whereHas('equipment', function($q) use ($user) {
+            $q->where('club_id', $user->id);
+        });
+    })
+->whereIn('status', ['pending', 'approved'])
+    ->latest()
+    ->limit(5)
+    ->get();
             return view('dashboard.admin', compact(
                 'totalEquipment', 'availableEquipment', 'rentedEquipment',
                 'maintenanceEquipment', 'pendingRequests', 'activeRentals', 'recentRequests'

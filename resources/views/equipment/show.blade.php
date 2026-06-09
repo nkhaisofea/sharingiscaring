@@ -9,64 +9,7 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8"
      id="equipment-show"
-     x-data="{
-         showModal: false,
-         startDate: '{{ old('start_date') }}',
-         endDate: '{{ old('end_date') }}',
-         pricePerDay: {{ $equipment->price_per_day }},
-         blockedDates: @json($blockedDates),
-         startPicker: null,
-         endPicker: null,
-         get days() {
-             if (!this.startDate || !this.endDate) return 0;
-             const start = new Date(this.startDate + 'T00:00:00');
-             const end = new Date(this.endDate + 'T00:00:00');
-             if (end < start) return 0;
-             return Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
-         },
-         get totalPrice() {
-             return (this.days * this.pricePerDay).toFixed(2);
-         },
-         openRentalModal() {
-             this.showModal = true;
-             this.$nextTick(() => this.initDatePickers());
-         },
-         initDatePickers() {
-             if (typeof flatpickr === 'undefined') return;
-             if (this.startPicker) return;
-
-             const self = this;
-             const baseConfig = {
-                 minDate: 'today',
-                 dateFormat: 'Y-m-d',
-                 disable: this.blockedDates,
-             };
-
-             this.startPicker = flatpickr(this.$refs.startInput, {
-                 ...baseConfig,
-                 defaultDate: this.startDate || null,
-                 onChange(selectedDates, dateStr) {
-                     self.startDate = dateStr;
-                     if (self.endPicker) {
-                         self.endPicker.set('minDate', dateStr || 'today');
-                         if (self.endDate && self.endDate < dateStr) {
-                             self.endPicker.clear();
-                             self.endDate = '';
-                         }
-                     }
-                 },
-             });
-
-             this.endPicker = flatpickr(this.$refs.endInput, {
-                 ...baseConfig,
-                 minDate: this.startDate || 'today',
-                 defaultDate: this.endDate || null,
-                 onChange(selectedDates, dateStr) {
-                     self.endDate = dateStr;
-                 },
-             });
-         }
-     }"
+     x-data="equipmentRental()"
      @keydown.escape.window="showModal = false">
 
     {{-- Breadcrumb --}}
@@ -342,17 +285,82 @@
 </div>
 @endsection
 
+```blade
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    @if(old('start_date') && auth()->check() && (auth()->id() !== $equipment->club_id || auth()->user()->isSuperAdmin()))
-        <script>
-            document.addEventListener('alpine:initialized', () => {
-                const root = document.getElementById('equipment-show');
-                if (root && root._x_dataStack) {
-                    root._x_dataStack[0].showModal = true;
-                    root._x_dataStack[0].$nextTick(() => root._x_dataStack[0].initDatePickers());
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+function equipmentRental() {
+    return {
+        showModal: false,
+        startDate: '',
+        endDate: '',
+        pricePerDay: {{ $equipment->price_per_day }},
+        blockedDates: @json($blockedDates),
+
+        get days() {
+            if (!this.startDate || !this.endDate) return 0;
+
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+
+            return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        },
+
+        get totalPrice() {
+            return (this.days * this.pricePerDay).toFixed(2);
+        },
+
+openRentalModal() {
+    this.showModal = true;
+
+    this.$nextTick(() => {
+        if (!this.startPicker) {
+            this.startPicker = flatpickr(this.$refs.startInput, {
+                minDate: "today",
+                dateFormat: "Y-m-d",
+                disable: this.blockedDates,
+                onChange: (selectedDates, dateStr) => {
+                    this.startDate = dateStr;
+
+                    if (this.endPicker) {
+                        this.endPicker.set('minDate', dateStr || 'today');
+
+                        if (this.endDate && this.endDate < dateStr) {
+                            this.endPicker.clear();
+                            this.endDate = '';
+                        }
+                    }
                 }
             });
-        </script>
-    @endif
+        }
+
+        if (!this.endPicker) {
+            this.endPicker = flatpickr(this.$refs.endInput, {
+                minDate: this.startDate || "today",
+                dateFormat: "Y-m-d",
+                disable: this.blockedDates,
+                onChange: (selectedDates, dateStr) => {
+                    this.endDate = dateStr;
+                }
+            });
+        }
+    });
+}
+    };
+}
+</script>
+
+@if(old('start_date') && auth()->check() && (auth()->id() !== $equipment->club_id || auth()->user()->isSuperAdmin()))
+<script>
+document.addEventListener('alpine:init', () => {
+    const root = document.getElementById('equipment-show');
+
+    if (root && root._x_dataStack) {
+        root._x_dataStack[0].showModal = true;
+    }
+});
+</script>
+@endif
 @endpush
+```

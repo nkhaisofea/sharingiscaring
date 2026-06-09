@@ -64,6 +64,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-rentals', [RentalController::class, 'myRentals'])->name('rentals.my-rentals');
     Route::post('/rentals/{rental}/complete', [RentalController::class, 'complete'])->name('rentals.complete');
     Route::post('/rentals/{rental}/cancel', [RentalController::class, 'cancel'])->name('rentals.cancel');
+    Route::post('/rentals/{rental}/approve', [RentalController::class, 'approve'])->name('rentals.approve');
+    Route::post('/rentals/{rental}/reject', [RentalController::class, 'reject'])->name('rentals.reject');
 });
 
 // Fallback wildcard route for single equipment view

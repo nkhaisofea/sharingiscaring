@@ -110,7 +110,7 @@
                             <th class="px-6 py-4">Total Price</th>
                             <th class="px-6 py-4">Purpose</th>
                             <th class="px-6 py-4 text-center">Status</th>
-                        </tr>
+                            <th class="px-6 py-4 text-center">Actions</th>                        </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($recentRequests as $rental)
@@ -147,10 +147,37 @@
                                         </span>
                                     </div>
                                 </td>
+                                <td class="px-6 py-4">
+    <div class="flex justify-center gap-2">
+        @if($rental->status === 'pending')
+
+            <form method="POST"
+                  action="{{ route('rentals.approve', $rental) }}">
+                @csrf
+
+                <button type="submit"
+                        class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">
+                    Approve
+                </button>
+            </form>
+
+            <form method="POST"
+                  action="{{ route('rentals.reject', $rental) }}">
+                @csrf
+
+                <button type="submit"
+                        class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg">
+                    Reject
+                </button>
+            </form>
+
+        @endif
+    </div>
+</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-500 font-medium">
+                                <td colspan="7" class="px-6 py-12 text-center text-gray-500 font-medium">
                                     <i class="fas fa-calendar-xmark text-gray-300 text-4xl mb-3 block"></i>
                                     No active rentals yet.
                                 </td>

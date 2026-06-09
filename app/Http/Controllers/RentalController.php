@@ -47,17 +47,15 @@ class RentalController extends Controller implements HasMiddleware
         $total_price = $days * $equipment->price_per_day;
         
         DB::transaction(function () use ($equipment, $validated, $total_price) {
-            Rental::create([
-                'equipment_id' => $equipment->id,
-                'borrower_id' => auth()->id(),
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'purpose' => $validated['purpose'],
-                'total_price' => $total_price,
-                'status' => 'approved'
-            ]);
-
-            $equipment->update(['availability_status' => 'rented']);
+        Rental::create([
+            'equipment_id' => $equipment->id,
+            'borrower_id' => auth()->id(),
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'purpose' => $validated['purpose'],
+            'total_price' => $total_price,
+            'status' => 'pending'
+        ]);
         });
         
         return redirect()->route('rentals.my-rentals')->with('success', 'Rental confirmed successfully!');
@@ -101,4 +99,40 @@ class RentalController extends Controller implements HasMiddleware
         
         return redirect()->back()->with('success', 'Rental request cancelled.');
     }
+    public function approve(Rental $rental)
+{
+    if (
+        $rental->equipment->club_id !== auth()->id()
+        && !auth()->user()->isSuperAdmin()
+    ) {
+        return back()->with('error', 'Unauthorized action.');
+    }
+
+    DB::transaction(function () use ($rental) {
+        $rental->update([
+            'status' => 'approved'
+        ]);
+
+        $rental->equipment->update([
+            'availability_status' => 'rented'
+        ]);
+    });
+
+    return back()->with('success', 'Rental approved.');
+}
+public function reject(Rental $rental)
+{
+    if (
+        $rental->equipment->club_id !== auth()->id()
+        && !auth()->user()->isSuperAdmin()
+    ) {
+        return back()->with('error', 'Unauthorized action.');
+    }
+
+    $rental->update([
+        'status' => 'rejected'
+    ]);
+
+    return back()->with('success', 'Rental rejected.');
+}
 }
