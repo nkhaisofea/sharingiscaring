@@ -264,6 +264,7 @@ class User extends Authenticatable
         return substr($initials, 0, 2);
     }
 }
+} 
 
 - Views and User Interface
 *Blade Templates Structure:*
@@ -365,8 +366,8 @@ Open browser to http://localhost:8000
 Default super admin may need to be created manually in database
 
 ## Default Test Accounts (if seeded)
-- Student Account: ainul@student.iium.edu.my / 88
-- Club Admin: gdg@gmail.com / 12345678 
+- Student Account: ainul@student.iium.edu.my / 12345678
+- Club Admin: sports.club@iium.edu.my / 12345678 
 - Super Admin: super.admin@gmail.com / password
 
 ## Testing and Quality Assurance
