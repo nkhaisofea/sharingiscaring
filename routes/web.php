@@ -5,10 +5,26 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\RentalController;
+use App\Models\Equipment;
+use App\Models\Rental;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::get('/', [EquipmentController::class, 'index'])->name('home');
+Route::get('/', function () {
+    $featuredEquipment = Equipment::with(['club', 'category'])
+        ->inRandomOrder()
+        ->limit(4)
+        ->get();
+
+    $stats = [
+        'clubs' => User::whereNotNull('club_name')->count(),
+        'equipment' => Equipment::count(),
+        'rentals' => Rental::count(),
+    ];
+
+    return view('home', compact('featuredEquipment', 'stats'));
+})->name('home');
 Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
 
 // Guest routes (auth)

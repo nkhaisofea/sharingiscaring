@@ -20,6 +20,7 @@ class UserRoleSeeder extends Seeder
                 'student_id' => 'STAFF001',
                 'role' => 'club_admin',
                 'club_name' => 'IIUM Sports Club',
+                'club_status' => 'approved',
             ],
             [
                 'name' => 'Super Admin',
